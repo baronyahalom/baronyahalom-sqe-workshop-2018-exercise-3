@@ -94,9 +94,10 @@ const ifState = (line)=>
     let cond = check(line.test);
     tableParse.push({ Line: counter, Type: 'if statement', Name: '' ,Condition:cond, Value:'' });
     counter++;
-    if(line.consequent.type === 'BlockStatement')
-        line.consequent = line.consequent.body[0];
-    checkWich[line.consequent.type](line.consequent);
+    //if(line.consequent.type === 'BlockStatement')
+    line.consequent = line.consequent.body;
+    for(let i=0; i<line.consequent.length; i++)
+        checkWich[line.consequent[i].type](line.consequent[i]);
     if(line.alternate)
     {
         if(line.alternate.type==='IfStatement')
