@@ -113,14 +113,14 @@ const elseSta = (type, line)=>
         let cond = check(line.test);
         tableParse.push({Line: counter, Type: type, Name: '', Condition: cond, Value: ''});
         counter++;
-        checkWich[line.consequent.type](line.consequent);
-        if(line.alternate)
-        {
+        line.consequent = line.consequent.body;
+        for(let i=0; i<line.consequent.length; i++)
+            checkWich[line.consequent[i].type](line.consequent[i]);
+        if(line.alternate) {
             if(line.alternate.type==='IfStatement')
                 elseSta('Else If Statement',line.alternate);
             else
-                elseSta('Else Statemen',line.alternate);
-        }
+                elseSta('Else Statemen',line.alternate);}
     }
     else{
         tableParse.push({Line: counter, Type: type, Name: '', Condition: '', Value: ''});
@@ -142,15 +142,16 @@ const check = (line)=>
 
 const check2 = (line) =>
 {
+    let exp;
     if(line.type === 'BinaryExpression')
     {   let left= check(line.left);
         let right= check(line.right);
-        let exp= left+line.operator+right;
+        exp= left+line.operator+right;
         return exp;
     }
     else if(line.type === 'UnaryExpression')
     {
-        let exp=line.operator + line.argument.value;
+        exp=line.operator + line.argument.value;
         return exp;
     }
 };
