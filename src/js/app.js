@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import {parseCode} from './code-analyzer';
 import * as parse from './toTable';
-
+import * as mySymbolic from './symbolicSub';
 let tableParse ;
 //let counter = 1;
 
@@ -10,10 +10,37 @@ $(document).ready(function () {
         let codeToParse = $('#codePlaceholder').val();
         let parsedCode = parseCode(codeToParse);
         $('#parsedCode').val(JSON.stringify(parsedCode, null, 2));
-        tableParse = parse.sendToTable1(parsedCode);
-        $('#my_table').append(makeTable());
+      //  tableParse = parse.sendToTable1(parsedCode);
+        //$('#my_table').append(makeTable());
+        mySymbolic.parsInput($('#input').val());
+        $('.red').remove();
+        $('.green').remove();
+        $('.white').remove();
+        print(mySymbolic.symbolicSubstitution(codeToParse,parsedCode));
+
     });
 });
+
+
+const print= (lines)=> {
+    let colorsMap=mySymbolic.getColorsMap();
+    let index=0;
+    for(let i=0;i<lines.length;i++){
+        let color=getColor(lines[i],index,colorsMap);
+        if(color !='white'){
+            index++;
+        }
+        $('#res').append($('<div>'+lines[i]+'</div>').addClass(color));
+    }
+};
+
+const getColor=(line,index,colorsMap)=>{
+    if(line.includes('if')|| line.includes('else'))
+    {
+        return colorsMap[index] ? 'green' : 'red';
+    }
+    return 'white';
+};
 
 const makeTable= ()=> {
     clear();
@@ -35,6 +62,7 @@ const makeTable= ()=> {
     });
     return table;
 };
+
 
 const clear= ()=>{
 

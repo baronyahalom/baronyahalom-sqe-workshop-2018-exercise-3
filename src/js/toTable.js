@@ -125,7 +125,8 @@ const elseSta = (type, line)=>
     else{
         tableParse.push({Line: counter, Type: type, Name: '', Condition: '', Value: ''});
         counter++;
-        checkWich[line.type](line);}
+        for(let i=0; i<line.body.length; i++)
+            checkWich[line.body[i].type](line.body[i]);}
 };
 
 const check = (line)=>
@@ -133,7 +134,7 @@ const check = (line)=>
     if(line.type === 'Identifier')
         return line.name;
     else if(line.type === 'Literal')
-        return line.value;
+        return isNaN(line.value) ? '\''+line.value+'\'' : line.value ;
     else if(line.type === 'MemberExpression')
         return check(line.object) + '[' + check(line.property) + ']';
     else
