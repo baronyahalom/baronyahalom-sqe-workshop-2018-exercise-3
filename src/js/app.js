@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import {parseCode} from './code-analyzer';
-import * as parse from './toTable';
-import * as mySymbolic from './symbolicSub';
+import * as symbolic from './symbolicSub';
 let tableParse ;
 //let counter = 1;
 
@@ -10,20 +9,18 @@ $(document).ready(function () {
         let codeToParse = $('#codePlaceholder').val();
         let parsedCode = parseCode(codeToParse);
         $('#parsedCode').val(JSON.stringify(parsedCode, null, 2));
-      //  tableParse = parse.sendToTable1(parsedCode);
-        //$('#my_table').append(makeTable());
-        mySymbolic.parsInput($('#input').val());
-        $('.red').remove();
-        $('.green').remove();
-        $('.white').remove();
-        print(mySymbolic.symbolicSubstitution(codeToParse,parsedCode));
+        symbolic.parsInput($('#input').val());
+        print(symbolic.symbolicSubstitution(codeToParse,parsedCode));
 
     });
 });
 
 
 const print= (lines)=> {
-    let colorsMap=mySymbolic.getColorsMap();
+    $('.red').remove();
+    $('.green').remove();
+    $('.white').remove();
+    let colorsMap=symbolic.getColorsMap();
     let index=0;
     for(let i=0;i<lines.length;i++){
         let color=getColor(lines[i],index,colorsMap);

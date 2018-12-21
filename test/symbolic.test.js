@@ -25,7 +25,7 @@ describe('Tests for symbolic functions', () => {
         );
     });
 
-    it('3. check complex if with strings and array', () => {
+    it('2. check while test', () => {
         const input='\n' +
             'function foo(x, y, z){\n' +
             '    while(x<2){\n' +
@@ -51,87 +51,84 @@ describe('Tests for symbolic functions', () => {
         );
     });
 
-    /* it('4. check with global vars', () => {
-         const input='let w=2;\n' +
-             '\n' +
-             '            function f(x){\n' +
-             '                if (x > 2) {\n' +
-             '                    x = 12;\n' +
-             '                } else if (a == w) {\n' +
-             '                    x = x - 1;\n' +
-             '                } else {\n' +
-             '                    x = x * 3;\n' +
-             '            }\n' +
-             '                return x;\n' +
-             '            }\n' +
-             'let a=12;\n' +
-             '            w=w+10;';
-         symbolic.argsParser('x=1')
-         assert.equal(symbolic.subtitution(input,parseCode(input)).length,  12);
-         assert.deepEqual(
-             symbolic.getColorsMap(),
-             [false,true,false]
-         );
-     });
+    it('3. check global', () => {
+        const input='let w;\n' +
+            'w=\'vvv\' \n' +
+            'function foo(){\n' +
+            ' let x=\'v\'+w;\n' +
+            ' if(x==\'vvvv\'){\n' +
+            '  return x;\n' +
+            ' }\n' +
+            '}';
+        symbolic.parsInput('')
+        assert.equal(symbolic.symbolicSubstitution(input,parseCode(input)).length,  6);
+        assert.deepEqual(
+            symbolic.getColorsMap(),
+            [true]
+        );
+    });
 
-     it('5. check with global arr', () => {
-         const input='let w=a[1]\n' +
-             'w=\'ravid\'\n' +
-             'let xs2=-1;\n' +
-             'xs2=xs2-1;\n' +
-             'xs2=xs2*-1;\n' +
-             'function foo(){\n' +
-             'let x\n' +
-             'if(xs2==2){\n' +
-             'return xs2;\n' +
-             '}\n' +
+    it('4. check with arr local', () => {
+        const input='function foo(x)\n' +
+             '{\n' +
+             'let a=[1,3,\'\']\n' +
+             'let b= a[1]-x;\n' +
+             'if(b===1)\n' +
+             'return b;\n' +
              '}';
-         symbolic.argsParser('');
-         assert.equal(symbolic.subtitution(input,parseCode(input)).length, 8);
-         assert.deepEqual(
-             symbolic.getColorsMap(),
-             [true]
-         );
-     });
+        symbolic.parsInput('x=3');
+        assert.equal(symbolic.symbolicSubstitution(input,parseCode(input)).length, 5);
+        assert.deepEqual(
+            symbolic.getColorsMap(),
+            [false]
+        );
+    });
 
-     it('6. check with global arr', () => {
-         const input='let w=a[1]\n' +
-             'w=\'ravid\'\n' +
-             'let xs2=-1;\n' +
-             'xs2=xs2-1;\n' +
-             'xs2=xs2*-1;\n' +
+    it('5. check if the global changed', () => {
+        const input='let w;\n' +
              'function foo(){\n' +
-             'let x\n' +
-             'if(xs2==2){\n' +
-             'return xs2;\n' +
-             '}\n' +
-             '}';
-         symbolic.argsParser('a=[1,2]');
-         assert.equal(symbolic.subtitution(input,parseCode(input)).length, 8);
-         assert.deepEqual(
-             symbolic.getColorsMap(),
-             [true]
-         );
-     });
-
-     it('7. check with globals in input', () => {
-         const input='let w;\n' +
-             'let f;\n' +
-             'function x(){\n' +
-             'let y;\n' +
-             'if(w==1){\n' +
+             'let y=w;\n' +
+             'if(w==y){\n' +
              'return w;\n' +
              '}\n' +
              '}';
-         symbolic.argsParser('w=1')
-         assert.equal(symbolic.subtitution(input,parseCode(input)).length, 5);
-         assert.deepEqual(
-             symbolic.getColorsMap(),
-             [true]
-         );
-     });
+        symbolic.parsInput('w=1');
+        assert.equal(symbolic.symbolicSubstitution(input,parseCode(input))[1],  'if(w==w){');
+        assert.deepEqual(
+            symbolic.getColorsMap(),
+            [true]
+        );
+    });
 
-     it('8. check with globals in input', () => {
+    it('5. check func getExp', () => {
+        const input='x=5';
+        assert.equal(
+            symbolic.getExp(input),
+            'x'
+        );
+    });
+
+    it('6. check func isToSave', () => {
+        const input='return x;';
+        assert.equal(
+            symbolic.isToSave(input),
+            true
+        );
+    });
+
+    it('7. check funcColor', () => {
+        const input='let x=5;\n' +
+            'function foo(){\n' +
+            'return x+1;\n' +
+            '}';
+        assert.deepEqual(
+            symbolic.create(input),
+            ['function foo(){','return x+1;','}']
+        );
+    });
+
+
+    /* it('8. check with globals in input', () => {
          const input='let w;\n' +
              'let f;\n' +
              'function x(){\n' +

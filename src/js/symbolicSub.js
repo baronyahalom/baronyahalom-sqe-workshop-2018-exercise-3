@@ -22,7 +22,7 @@ export const symbolicSubstitution = (codeToParse,parseCode) =>
     dic= copyVarMapToDic();
     substitute(parseCode);
     //return tableParse;
-    return createFunctionColor(codeToParse);
+    return create(codeToParse);
 };
 
 const checkGlob= (parsedCode)=>{
@@ -43,8 +43,6 @@ const checkGlob= (parsedCode)=>{
         case 'ExpressionStatement': setVarMap(check(item.expression.left),check(item.expression.right)); break;
         }
     });
-    /*console.log(varMap);
-    console.log(dic);*/
 };
 
 /*const parseDeclarations = (declarations) =>{
@@ -54,14 +52,37 @@ const checkGlob= (parsedCode)=>{
 };*/
 
 const setVarMap = (left,right) =>{
+    if(right!=null && Array.isArray(right)) {
+
+        return setVarMap2(left,right);
+    }
     const varNum=checkIfNum(right);
     if(varNum.length>0)
         right= getFromVarMap(varNum,right);
     if(right===null)
-        right= left in varMap ? varMap[left] : right;
-
+        right= setVarMap3(left,right);
     varMap[left]=calcRight(right);
 };
+
+const setVarMap2 = (left,right) =>{
+    if(right!=null && Array.isArray(right)) {
+        let x = '[';
+        for(let i=0;i<right.length;i++)
+            x=x+right[i]+',';
+        x = x.substring(0,x.length-1);
+        x = x + ']';
+        return toVarMap(left + '=' + x);
+    }
+
+};
+
+const setVarMap3 = (left,right) =>{
+    if(left in varMap)
+        return varMap[left];
+    else
+        return right;
+};
+
 
 const getFromVarMap = (varNum,right)=> {
     for (let i=0;i<varNum.length;i++)
@@ -78,19 +99,21 @@ const calcRight= (val)=>{
         return val;
     }
     val=val.split(' ').join('');
-    //const vals=val.split(/[\s<>=]+/);
-    //const operators=val.split(/[^\s<>=]+/);
     let right='';
-    //for(let i=0;i<vals.length;i++){
+    right = calcRight2(val);
+    return right;
+};
+
+const calcRight2 = (val)=>{
+    let right='';
     try {
-        let caseTrue=eval(val);//eval(vals[i]); //+ operators[i+1];
-        /*if(/^[a-zA-Z]+$/.test(caseTrue))
-                caseTrue=val;*/
+        let caseTrue=eval(val);
+        if(/^[a-zA-Z]+$/.test(caseTrue) && caseTrue!=true && caseTrue!=false)
+            caseTrue='\''+caseTrue+'\'';
         right+= caseTrue;
     }catch(e){
         right = val;
     }
-    //  }
     return right;
 };
 
@@ -183,7 +206,6 @@ const ifState = (line , whatIsNext)=>
     if (line.type===undefined)
         line.type='If Statement';
     let cond = check(line.test);
-    //tableParse.push({ Line: lineCounter, Type: 'if statement', Name: '' ,Condition:cond, Value:'' });
     let isIfTrue=checkCond(cond,whatIsNext);
     ifElaseMap.push(isIfTrue);
     if(isIfTrue)
@@ -196,11 +218,9 @@ const ifState = (line , whatIsNext)=>
     else
         conseq(line.consequent,line , isIfTrue);
     if(line.alternate)
-    {
-        if(line.alternate.type==='IfStatement')
-            elseSta('Else If Statement',line.alternate,whatIsNext);
-        else
-            elseSta('Else Statemen',line.alternate,whatIsNext);}};
+    {elseSta(line.alternate,whatIsNext);
+    }};
+
 
 const conseq = (consequent , line, isIfTrue)=>
 {
@@ -219,14 +239,15 @@ const dicToTemp = ()=> {
     return prevdic;
 };
 
-const elseSta = (type, line , whatIsNext)=>
+const elseSta = ( line , whatIsNext)=>
 {
     dic = prevDic;
-    if(type === 'Else If Statement') {
-        elseIf(type, line , whatIsNext);
+    if(line.type === 'IfStatement') {
+        elseIf('Else If Statement', line , whatIsNext);
 
     } else{
-        else2('Else Statemen',line,whatIsNext);}};
+        else2('Else Statemen',line,whatIsNext);}
+};
 
 const else2 = (type, line , whatIsNext)=> {
     dic = prevDic;
@@ -256,10 +277,9 @@ const elseIf = (type, line , whatIsNext)=> {
     else
         conseq(line.consequent,line , isIfTrue);
     if(line.alternate) {
-        if(line.alternate.type==='IfStatement')
-            elseSta('Else If Statement',line.alternate,whatIsNext);
-        else
-            elseSta('Else Statemen',line.alternate,whatIsNext);}};
+        elseSta(line.alternate,whatIsNext);
+    }
+};
 
 const checkCond = (condition ,whatIsNext)=> {
     let val = replaceValues(condition);
@@ -293,11 +313,19 @@ const saveCurrentDic= ()=>{
 
 //2- two functions that insert to dic after raplacing vals
 const addToDic= (key,val)=>{
+    if(Array.isArray(val))
+        return toMap(key,val);
     val=replaceValues(val);
     dic[key]=val;
 };
 
-const replaceValues= (val ,isVar)=>{
+const toMap = (key,val)=>{
+    for(let i=0; i<val.length;i++)
+        dic[key+'['+i+']']=val[i];
+
+};
+
+const replaceValues= (val)=>{
     let vars=[];
     if (isNaN(val)) {
         vars= val.split(/[\s<>,=()*/;{}%+-]+/).filter(s=>s!=='');
@@ -306,11 +334,8 @@ const replaceValues= (val ,isVar)=>{
         let varOrNum ='';
         if (dic[item] !== undefined) {
             varOrNum = item;
-            //if(isVar!==true) {
             if (!(varOrNum in varMap))
                 varOrNum = dic[item];
-            //}
-
             val = val.replace(item, varOrNum);
         }
     });
@@ -340,9 +365,14 @@ const check2 = (line) =>
         return exp;
     }
     else if(line.type === 'UnaryExpression')
+    {exp=line.operator + line.argument.value;
+        return exp;}
+    else if(line.type == 'ArrayExpression')
     {
-        exp=line.operator + line.argument.value;
-        return exp;
+        let res=[];
+        (line.elements).forEach((line)=>{
+            res.push(check(line));});
+        return res;
     }
 };
 
@@ -391,7 +421,7 @@ function copyVarMapToDic() {
     return dic;
 }
 // this for showing result
-const createFunctionColor=(code)=>{
+export const create=(code)=>{
     let lines=code.split(/\r?\n/);
     const res=[];
     let indx=0;
@@ -402,8 +432,7 @@ const createFunctionColor=(code)=>{
             res.push(sen);
         }
         else if(isToSave(sen))
-            res.push(getValid(i-indx ,sen));
-    }
+            res.push(getValid(i-indx ,sen));}
     return res;
 };
 
@@ -412,16 +441,12 @@ const getValid= (index,sen)=> {
     let vars = linesDic[index+1];
     for(const k in vars)
         dic[k]=vars[k];
-    return replaceValues(sen, true);
+    return replaceValues(sen);
 };
 
-const isLineInValid= (sen)=>
-{
-    sen==='{' || sen==='' || sen==='}' || sen.split(' ').join('')===''|| sen.split(' ').join('')==='}';};
 
-const isToSave = (sen)=>{
-    //const isIf=sent=> sent.includes('else')||sent.includes('if');
-    //const getExpression= sent=> sent.includes('=') ? checkIfNum(sent).filter(s=>s!=='')[0] : '';
+
+export const isToSave = (sen)=>{
     if(sen.includes('function'))
         return true;
     else if(getExp(sen) in varMap)
@@ -437,7 +462,7 @@ const isToSave2 = (sen)=>{
         return true;
 };
 
-const getExp = (sen)=>{
+export const getExp = (sen)=>{
     let val ='';
     if(sen.includes('=')){
         if (isNaN(sen)) {
@@ -455,26 +480,6 @@ const checkIfNum = (val)=>{
         return val.split(/[\s<>,=()*/;{}%+-]+/).filter(s=>s!=='');
     }
     return [];
-};
-
-const replaceVals2= (val,isVar)=>{
-    let vars=[];
-    if (isNaN(val)) {
-        vars= val.split(/[\s<>,=()*/;{}%+-]+/).filter(s=>s!=='');
-    }
-    vars.forEach((item)=> {
-        let varOrNum = item;
-        if (dic[item] !== undefined) {
-            if (!(varOrNum in varMap))
-                varOrNum = dic[item];
-        }
-        val = val.replace(item, varOrNum);
-    });
-    if(isVar){
-        return val;
-    }
-    //val=replaceNums(val);
-    return val;
 };
 
 /// function for the last part
