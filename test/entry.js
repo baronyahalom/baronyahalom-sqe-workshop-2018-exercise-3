@@ -1,3 +1,4 @@
 import './code-analyzer.test';
-import './symbolic.test';
+import './toTable.test';
+//import './symbolic.test';
 

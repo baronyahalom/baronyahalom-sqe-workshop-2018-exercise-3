@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import {parseCode} from './code-analyzer';
 import * as symbolic from './symbolicSub';
+import * as parse from './toTable';
 let tableParse ;
 //let counter = 1;
 
@@ -11,9 +12,32 @@ $(document).ready(function () {
         $('#parsedCode').val(JSON.stringify(parsedCode, null, 2));
         symbolic.parsInput($('#input').val());
         print(symbolic.symbolicSubstitution(codeToParse,parsedCode));
+        parse.sendToTable1(parsedCode);
+        drawGraph(parse.getDraw());
 
     });
 });
+
+function drawGraph(operands)
+{
+    let diagram = flowchart.parse(operands);
+    diagram.drawSVG('diagram', {
+        'x': 0, 'y': 0,
+        'line-width': 2, 'line-length': 50, 'text-margin': 10, 'font-size': 14, 'font-color': 'black', 'line-color': 'black',
+        'element-color': 'black', 'fill': 'white', 'yes-text': 'T', 'no-text': 'F', 'arrow-end': 'block', 'scale': 1,
+        'symbols': {
+            'start': {
+                'font-color': 'black', 'element-color': 'green', 'fill': 'yellow' ,'start-text': '',
+            },
+            'end':{
+                'class': 'end-element'
+            }
+        },
+        'flowstate' : {
+            'green' : { 'fill' : 'green'}, 'white': {'fill' : 'white'}
+        }
+    });
+}
 
 
 const print= (lines)=> {
